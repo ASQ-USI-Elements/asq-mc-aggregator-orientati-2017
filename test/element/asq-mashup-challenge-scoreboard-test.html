@@ -1,0 +1,209 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="asq" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <title>asq-rating viewer test</title>
+
+  <script src="../../../webcomponentsjs/webcomponents.min.js"></script>
+  <link rel="import" href="../../../test-fixture/test-fixture.html">
+  <script src="../../../web-component-tester/browser.js"></script>
+  <script src="../../../test-fixture/test-fixture-mocha.js"></script>
+
+  <!-- Step 1: import the element to test -->
+  <link rel="import" href="../../asq-mashup-challenge-scoreboard.html">
+</head>
+<body>
+
+  <test-fixture id="leFixture">
+    <template>
+        <asq-mashup-challenge-scoreboard>
+        </asq-mashup-challenge-scoreboard>
+    </template>
+  </test-fixture>
+
+<script>
+    var myEl;
+
+    describe('<asq-mashup-challenge-scoreboard>', function() {
+
+      beforeEach(function () {
+        this.el = fixture('leFixture');
+      });
+
+       describe('template', function(){
+        describe('headers', function(){
+          beforeEach(function(){
+            this.el.questions = [
+              {
+                data:{
+                  ratingItems: [
+                    {html: "Criterion 1"},
+                    {html: "Criterion 2"},
+                    {html: "Criterion 3"}
+                  ]
+                }
+              },
+              {
+                data:{
+                  ratingItems: [
+                    {html: "Criterion 1"},
+                    {html: "Criterion 2"},
+                    {html: "Criterion 3"}
+                  ]
+                }
+              }
+            ];
+          });
+          it("should display the correct titles", function(done){
+            flush(function(){
+              var ths = this.el.$.scoreboard.shadowRoot.querySelectorAll('.sortable-table th');
+              assert.equal(ths.length, 6)
+              assert.equal(ths[0].innerText, "Name")
+              assert.equal(ths[1].innerText, "Rank")
+              assert.equal(ths[2].innerText, "Criterion 1")
+              assert.equal(ths[3].innerText, "Criterion 2")
+              assert.equal(ths[4].innerText, "Criterion 3")
+              assert.equal(ths[5].innerText, "Total")
+              done();
+            }.bind(this));
+          });
+        });
+
+        describe('cells', function(){
+          beforeEach(function(){
+            this.el.questions = [
+              {
+                data:{
+                  stem: "Stem 1",
+                  rank: 2,
+                  total: 3.29,
+                  ratingItems: [
+                    {html: "Criterion 1", rating: 1.23},
+                    {html: "Criterion 2", rating: 2.57},
+                    {html: "Criterion 3", rating: 0.58}
+                  ]
+                }
+              },
+               {
+                data:{
+                  stem: "Stem 2",
+                  rank: 1,
+                  total: 4,
+                  ratingItems: [
+                    {html: "Criterion 1", rating: 5},
+                    {html: "Criterion 2", rating: 4},
+                    {html: "Criterion 3", rating: 3}
+                  ]
+                }
+              }
+            ];
+          });
+
+          it("should display the correct titles", function(done){
+            flush(function(){
+              var cells = this.el.$.scoreboard.shadowRoot.querySelectorAll('.sortable-table td');
+              assert.equal(cells.length, 12)
+              assert.equal(cells[0].innerText, "Stem 1")
+              assert.equal(cells[1].innerText, 2);
+              assert.equal(cells[6].innerText, "Stem 2")
+              assert.equal(cells[7].innerText, 1);
+              done();
+            }.bind(this));
+          });
+
+           it("should render the correct <asq-rating-item> elements", function(done){
+            flush(function(){
+              var rItems = this.el.$.scoreboard.shadowRoot.querySelectorAll('.sortable-table asq-rating-item');
+              assert.equal(rItems.length, 8)
+              rItems.array().forEach(function(item){
+                assert.equal(item.disabled, true, "all items should be disabled")
+              })
+              assert.equal(rItems[0].rating, "1.23")
+              assert.equal(rItems[1].rating, "2.57")
+              assert.equal(rItems[2].rating, "0.58")
+              assert.equal(rItems[3].rating, "3.29")
+              assert.equal(rItems[4].rating, "5")
+              assert.equal(rItems[5].rating, "4")
+              assert.equal(rItems[6].rating, "3")
+              assert.equal(rItems[7].rating, "4")
+              done();
+            }.bind(this));
+          });
+        });
+
+      });
+
+      describe('methods', function(){
+        describe('created()', function(){
+
+          before(function(){
+            var p = HTMLElement.getPrototypeForTag('ASQ-MASHUP-CHALLENGE-SCOREBOARD');
+            this.stub = sinon.stub(p, "subscribeToEvents");
+          });
+
+          beforeEach(function(){
+            this.stub.reset();
+          })
+
+          after(function(){
+            this.stub.restore();
+          });
+
+          it('should call subscribeToEvents when `asq-ready` fires', function(done) {
+            var event = new CustomEvent('asq-ready', { 'detail': {} });
+            document.dispatchEvent(event);
+            setTimeout(function(){
+              //the event is received twice from the element I don't know why
+              assert.ok(this.stub.called);
+              done();
+            }.bind(this),1);            
+          });
+        });
+
+        describe('subscribeToEvents()', function(){
+
+          it('should register for the `asq:question_type` event', function() {
+            var onStub = sinon.stub();
+            var eventEmitter = {on : onStub}
+            this.el.subscribeToEvents(eventEmitter);
+            assert.ok(onStub.calledOnce);
+            assert.ok(onStub.calledWith('asq:question_type'));
+          });
+        });
+
+        describe('onScoreboard()', function(){
+
+          before(function(){
+            this.evt = {
+              questions: [
+              {
+                data:{
+                  total: 3.289,
+                  ratingItems: [{rating: 1.234566}, {rating: 2.57}, {rating: 0.579}
+                  ]
+                }
+              }]
+            };
+            this.expectedQuestions = [
+            {
+              data:{
+                total: 3.29,
+                ratingItems: [{rating: 1.23}, {rating: 2.57}, {rating: 0.58}
+                ]
+              }
+            }];
+          })
+
+          it('should round to two decimals and set the questions to evt.questions', function() {
+            this.el.onScoreboard(this.evt)
+            assert.deepEqual(this.el.questions , this.expectedQuestions);
+          });
+        });
+      });
+
+    });
+  </script>
+
+</body>
+</html>

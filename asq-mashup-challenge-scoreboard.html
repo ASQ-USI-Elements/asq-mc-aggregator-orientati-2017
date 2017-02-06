@@ -1,0 +1,182 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../asq-base/asq-base.html">
+<link rel="import" href="../asq-rating-q/asq-rating-item.html">
+<link rel="import" href="../paper-datatable/paper-datatable.html">
+
+
+<!--
+`asq-mashup-challenge-scoreboard` is the scoreboard for ICWE2015 Rapid Mashup Challenge.
+
+##### Example
+    <asq-mashup-challenge-scoreboard questions="{{questions}}">
+    </asq-mashup-challenge-scoreboard>
+
+@element asq-mashup-challenge-scoreboard
+@group ASQ Elements
+@blurb `asq-mashup-challenge-scoreboard` is the scoreboard for ICWE2016 Rapid Mashup Challenge.
+@homepage http://github.com/ASQ_USI/asq-mashup-challenge-scoreboard
+-->
+
+<dom-module id="asq-mashup-challenge-scoreboard">
+  <style>
+      :host{
+        display: block;
+      }
+    </style>
+  <template>
+
+    <!-- (for now) Keep same when either viewer or presenter -->
+
+    <paper-datatable id="scoreboard" data="[[sortableTableQuestions]]" multi-selection>
+      <paper-datatable-column header="Name" property="name" sortable></paper-datatable-column>
+      <paper-datatable-column width="65px" align="center" header="Rank" property="rank" sortable></paper-datatable-column>
+      <paper-datatable-column width="65px" align="center" header="Votes" property="votes" sortable></paper-datatable-column>
+      <template is="dom-repeat" items="{{sortableTableColumns}}">
+        <paper-datatable-column  width="95px" align="center" header="{{item}}" property="{{item}}" sortable>
+        </paper-datatable-column>
+      </template>
+      <paper-datatable-column header="Total" property="total" width="200px" sortable>
+        <template>
+          <template is="dom-if" if="{{!_hasPositiveTotal(value)}}">
+            N/A
+          </template>
+          <template is="dom-if" if="{{_hasPositiveTotal(value)}">
+            <asq-rating-item rating="{{value}}" disabled></asq-rating-item>
+          </template>
+        </template>
+      </paper-datatable-column>
+    </paper-datatable>
+
+  </template>
+  <script>
+    (function () {
+
+      function roundToTwoDecimals(val) {
+        // round to 2 decimals
+        // Note the plus sign that drops any "extra" zeroes at the end.
+        // It changes the result (which is a string) into a number again (think "0 + foo"),
+        // which means that it uses only as many digits as necessary.
+        //from http://stackoverflow.com/questions/11832914/round-to-at-most-2-decimal-places-in-javascript
+        return +val.toFixed(2);
+      }
+
+      Polymer({
+        is: 'asq-mashup-challenge-scoreboard',
+
+        behaviors: [ASQ.asqElementBehavior],
+
+        properties: {
+          questions: {
+            type: Array,
+            value: function(){return []; },
+            notify: true,
+            observer: '_questionsChanged'
+          },
+
+          sortableTableColumns: {
+            type: Array,
+            value: function(){return []; },
+            notify: true,
+          },
+
+          sortableTableQuestions: {
+            type: Array,
+            value: function(){return []; },
+            notify: true,
+          }
+        },
+
+        created: function () {
+          document.addEventListener('asq-ready', function (evt) {
+            try {
+              this.subscribeToEvents(evt.detail.asqEventBus);
+            } catch (err) {
+              console.debug('failed to subscribeToEvents');
+            }
+          }.bind(this));
+        },
+
+        onQuestionType: function (evt) {
+          if (evt && evt.questionType && evt.questionType == 'asq-mashup-challenge-scoreboard') {
+            if (evt.type == 'scoreboard') {
+              this.onScoreboard(evt);
+            }
+          }
+        },
+
+        _hasPositiveTotal : function(val){
+          return val >= 0;
+        },
+
+        insertColumn: function(){
+          var column = document.createElement('paper-datatable-column');
+          column.header = 'Fat (dyn)';
+          column.property = 'fat';
+          column.type = 'number';
+          column.align = 'right';
+          column.formatValue = app.toFixedOne;
+          var columns = Polymer.dom(document).querySelectorAll('paper-datatable-column');
+          columns[3].parentNode.insertBefore(column, columns[3]);
+        },
+
+        _questionsChanged: function () {
+          var rn = {
+            "Solution Elegance": "Elegance",
+            "Tool Power" : "Power"
+          }
+          this.sortableTableQuestions = this.questions.map(function (q) {
+            var entry = {};
+            entry.name = q.data.stem;
+            entry.rank = q.data.rank;
+            entry.votes = parseInt(q.data.numVotes);
+            q.data.ratingItems.forEach(function (rItem) {
+              var title = rItem.html.replace(/^\s*Mashup\s+/i, '');
+              if(rn.hasOwnProperty(title)){
+                title = rn[title];
+              }
+              entry[title] = rItem.rating;
+            });
+            entry.total = q.data.total;
+            return entry;
+          });
+          if (this.questions.length < 1 || !this.questions[0].data.ratingItems) {
+            return;
+          }
+          // take the rating fields of the first question as rating fields Names
+          var riColNames = this.questions[0].data.ratingItems.map(function (rItem) {
+            var title = rItem.html.replace(/^\s*Mashup\s+/i, '');
+            if(rn.hasOwnProperty(title)){
+              title = rn[title];
+            }
+            return title;
+          });
+          this.sortableTableColumns = riColNames;
+        },
+
+        onScoreboard: function (evt) {
+          //round numbers to two decimals
+          for (var i = 0, l = evt.questions.length; i < l; i++) {
+            var question = evt.questions[i];
+            if (!question.data.total)
+              continue;
+            question.data.total = roundToTwoDecimals(question.data.total);
+            question.data.ratingItems.forEach(function (rItem) {
+              rItem.rating = roundToTwoDecimals(rItem.rating);
+            });
+          }
+          this.questions = evt.questions;
+        },
+
+        /**
+         * This question type is interested in  `asq:question_type`, which is emitted 
+         * when answer is submitted successfully.
+         *
+         */
+        subscribeToEvents: function (eventBus) {
+          eventBus.on('asq:question_type', this.onQuestionType.bind(this));
+        }
+      }
+);
+    }());
+  </script>
+</dom-module>

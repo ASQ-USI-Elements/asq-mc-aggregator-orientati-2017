@@ -1,0 +1,32 @@
+{
+  "name": "asq-mashup-challenge-scoreboard",
+  "version": "0.0.1",
+  "homepage": "https://github.com/ASQ-USI-Elements/asq-mashup-challenge-scoreboard",
+  "authors": [
+    "Vasileios Triglianos <triglian@gmail.com>"
+  ],
+  "ignore": [
+    ".gitignore",
+    "index.js",
+    "node_modules",
+    "bower_components",
+    "test",
+    "package.json",
+    "lib"
+  ],
+  "description": "ASQ Scoreboard element for the 2016 Rapid Mashup Challenge",
+  "keywords": [
+    "ASQ"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "asq-base": "ASQ-USI-Elements/asq-base#master",
+    "polymer": "polymer/polymer#^1.4.0",
+    "paper-datatable": "^0.9.8",
+    "asq-rating-q": "ASQ-USI-Elements/asq-rating-q"
+  },
+  "devDependencies": {
+    "iron-component-page": "PolymerElements/iron-component-page#^1.1.6",
+    "web-component-tester": "Polymer/web-component-tester#^4.2.2"
+  }
+}

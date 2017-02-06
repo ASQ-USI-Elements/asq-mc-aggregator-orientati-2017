@@ -1,0 +1,94 @@
+<!doctype html>
+<html>
+<head>
+  <meta name="asq-elements" content="width=device-width, initial-scale=1, user-scalable=no">
+
+  <title>ASQ | Mashup Challenge Scoreboard</title>
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+  
+  <link rel="import" href="../../polymer/polymer.html">
+  <link rel="import" href="../asq-mashup-challenge-scoreboard.html">
+
+  <style>
+    body {
+      font-family: 'Helvetica Neue', Helvetica, Arial;
+      font-size: 14px;
+      margin: 0;
+      padding: 24px;
+      -webkit-tap-highlight-color: rgba(0,0,0,0);
+      -webkit-touch-callout: none;
+    }
+    section {
+      padding: 20px 0;
+    }
+    section > div {
+      padding: 14px;
+      font-size: 16px;
+    }
+  </style>
+
+</head>
+<body>
+
+<template is="dom-bind" id="demo-template">
+
+  <section>
+    <asq-mashup-challenge-scoreboard questions="{{questions}}">
+    </asq-mashup-challenge-scoreboard>
+
+  </section>
+
+  <script>
+    var tpl = document.querySelector('#demo-template');
+    tpl.addEventListener('dom-change', function() {
+      tpl.questions = [
+        {
+         data:{
+           stem: "Item #1",
+           numVotes: 5,
+           total: 3.29,
+           rank: 2,
+           ratingItems: [
+             {html: "Criterion 1", rating: 1.23},
+             {html: "Criterion 2", rating: 2.57},
+             {html: "Criterion 3", rating: 0.58}
+           ]
+         }
+        },
+        {
+         data:{
+           stem: "Item #2",
+           numVotes: 5,
+           total: 4,
+           rank: 1,
+           ratingItems: [
+             {html: "Criterion 1", rating: 5},
+             {html: "Criterion 2", rating: 4},
+             {html: "Criterion 3", rating: 3}
+           ]
+         }
+        },
+        {
+         data:{
+           stem: "Item #3",
+           numVotes: 5,
+           total: 2.27,
+           rank:3,
+           ratingItems: [
+             {html: "Criterion 1", rating: 1},
+             {html: "Criterion 2", rating: 3},
+             {html: "Criterion 3", rating: 2.8}
+           ]
+         }
+        }
+      ];
+     });
+
+</script>
+
+
+</template>
+
+</body>
+</html>
